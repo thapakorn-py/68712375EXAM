@@ -1,0 +1,74 @@
+<template>
+  <div class="container mt-4 col-md-5">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h2 class="text-center mb-3">แก้ไขข้อมูลลูกค้า</h2>
+        <div v-if="loading" class="text-center">กำลังโหลดข้อมูล...</div>
+        <form v-else @submit.prevent="saveData">
+          <div class="mb-2">
+            <input v-model="form.firstName" class="form-control" placeholder="ชื่อ" required />
+          </div>
+          <div class="mb-2">
+            <input v-model="form.lastName" class="form-control" placeholder="นามสกุล" required />
+          </div>
+          <div class="mb-2">
+            <input v-model="form.phone" class="form-control" placeholder="เบอร์โทร" required />
+          </div>
+          <div class="mb-2">
+            <input type="email" v-model="form.email" class="form-control" placeholder="อีเมล" />
+          </div>
+          <div class="text-center mt-3">
+            <button type="submit" class="btn btn-primary">บันทึก</button>
+            <router-link to="/" class="btn btn-secondary ms-2">ยกเลิก</router-link>
+          </div>
+        </form>
+        <div v-if="message" class="alert alert-info mt-3">{{ message }}</div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import { API_BASE } from '../config'
+
+export default {
+  name: 'studentEdit',
+  data() {
+    return {
+      form: { student_id: null, firstName: '', lastName: '', phone: '', email: '' },
+      loading: true,
+      message: ''
+    }
+  },
+  // ดึงข้อมูลเดิมมาแสดงในฟอร์มตาม id ใน URL
+  async mounted() {
+    try {
+      const res = await fetch(`${API_BASE}/show_student.php?id=${this.$route.params.id}`)
+      const result = await res.json()
+      if (!result.success) throw new Error(result.message)
+      this.form = result.data
+    } catch (err) {
+      this.message = 'เกิดข้อผิดพลาด: ' + err.message
+    } finally {
+      this.loading = false
+    }
+  },
+  methods: {
+    // แก้ไขข้อมูล (Update)
+    async saveData() {
+      try {
+        const res = await fetch(`${API_BASE}/update_student.php`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(this.form)
+        })
+        const result = await res.json()
+        this.message = result.message
+        if (result.success) this.$router.push('/')
+      } catch (err) {
+        this.message = 'เกิดข้อผิดพลาด: ' + err.message
+      }
+    }
+  }
+}
+</script>
